@@ -1,0 +1,14 @@
+int i;
+
+
+int foo(int j){
+    return j;
+}
+
+void main()
+{
+        i := 2;
+        PrintInt(foo(i));
+}
+
+

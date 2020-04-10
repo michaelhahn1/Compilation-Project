@@ -1,0 +1,13 @@
+class Person
+{
+	int age := 34;
+	void print(){
+	    PrintInt(age);
+	}
+}
+
+void main(){
+    Person p = new Person;
+    p.print();
+    PrintInt(p.age);
+}

@@ -1,0 +1,15 @@
+void main()
+{
+    int x1 := 1;
+    int x2 := 1;
+    int x3 := 1;
+    int x4 := 1;
+    int x5 := 1;
+    int x6 := 1;
+    int x7 := 1;
+    int x8 := 1;
+    int x9 := 1;
+    int x10 := 1;
+    int x11 := x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + x10;
+    PrintInt(x11);
+}

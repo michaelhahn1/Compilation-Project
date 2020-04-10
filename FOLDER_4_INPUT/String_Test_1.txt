@@ -1,0 +1,10 @@
+string s1 := "Having";
+string s2 := "said";
+string s3 := "that";
+
+void main()
+{
+	string a := s1+"said"+s3;
+
+	PrintString(a);
+}

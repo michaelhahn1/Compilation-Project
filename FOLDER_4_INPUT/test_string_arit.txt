@@ -1,0 +1,7 @@
+string a := "HEll";
+string b := "H"+"Ell";
+
+void main()
+{
+	PrintInt(a=b);
+}

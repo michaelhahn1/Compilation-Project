@@ -1,0 +1,11 @@
+class Person
+{
+	int age := 69;
+}
+
+void main(){
+    Person p := new Person;
+    PrintInt(p.age);
+    p.age := 793;
+    PrintInt(p.age);
+}

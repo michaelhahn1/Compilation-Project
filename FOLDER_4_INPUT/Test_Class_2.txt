@@ -1,0 +1,19 @@
+
+
+class Film
+{
+    int ID;
+}
+
+
+class Person
+{
+	int age := 69;
+	Film favoritefilm;
+}
+void main(){
+    Person p := new Person;
+    p.favoritefilm := new Film;
+    p.favoritefilm.ID := 3;
+   PrintInt(p.favoritefilm.ID);
+}

@@ -1,0 +1,13 @@
+class Person
+{
+	int get(){
+	    PrintString("Hello");
+	    return 20;
+	}
+
+}
+
+void main(){
+    Person p := new Person;
+    PrintInt(p.get());
+}

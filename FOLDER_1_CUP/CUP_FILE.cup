@@ -1,0 +1,254 @@
+/*************/
+/* IMPORT(S) */
+/*************/
+import java_cup.runtime.*;
+import AST.*;
+import java.io.PrintWriter;
+
+parser code 
+{:
+	public Lexer lexer;
+	public boolean legal = true;
+	public PrintWriter file_writer;
+
+	public Parser(Lexer lexer,PrintWriter file_writer)
+	{
+		super(lexer);
+		this.lexer = lexer;
+		this.file_writer = file_writer;
+	}
+	public void report_error(String message, Object info)
+	{
+		legal = false;
+		System.out.print("ERROR >> ");		
+		System.out.print("[");
+		System.out.print(lexer.getLine());
+		System.out.print(":");
+		System.out.print(lexer.getTokenStartPosition());
+		System.out.print("] ");
+		this.file_writer.println("ERROR("+lexer.getLine()+")");		
+		file_writer.close();
+		System.exit(0);
+	}
+:}
+
+/************************/
+/* CUSTOMIZE CUP PARSER */
+/************************/
+scan with
+{:
+	Symbol s;
+	s = lexer.next_token();
+	//System.out.print(s.sym);
+	System.out.print("[");
+	System.out.print(lexer.getLine());
+	System.out.print(":");
+	System.out.print(lexer.getTokenStartPosition());
+	System.out.print("] ");
+	System.out.print(TokenNames.terminalNames[s.sym]);
+	if (s.value != null)
+	{
+		System.out.print("( ");
+		System.out.print(s.value);
+		System.out.print(" )");
+	}
+	System.out.print("\n");
+	return s; 
+:};
+
+/*************/
+/* TERMINALS */
+/*************/
+
+terminal NIL;
+terminal LPAREN;
+terminal RPAREN;
+terminal LBRACK;
+terminal RBRACK;
+terminal LBRACE;
+terminal RBRACE;
+terminal PLUS;
+terminal MINUS;
+terminal TIMES;
+terminal DIVIDE ;
+terminal COMMA;
+terminal DOT;
+terminal SEMICOLON;
+terminal ELLIPSIS;
+terminal ASSIGN;
+terminal EQ;
+terminal LT;
+terminal GT;
+terminal ARRAY;
+terminal EXTENDS;
+terminal RETURN;
+terminal WHILE;
+terminal IF;
+terminal NEW;
+terminal CLASS;
+terminal ERROR;
+
+/*************/
+/* TERMINALS */
+/*************/
+terminal Integer INT;
+terminal String ID;
+terminal String STRING;
+
+/*****************/
+/* NON TERMINALS */
+/*****************/
+
+non terminal AST_PROGRAM Program;
+non terminal AST_DEC_LIST dec_list;
+non terminal AST_DEC dec;
+non terminal AST_VAR_DEC varDec;
+non terminal AST_FUNC_DEC funcDec;
+non terminal AST_FUNCDEC_TYPE_SIGNATURE funcDec_signature;
+non terminal AST_CLASS_DEC classDec;
+non terminal AST_C_FIELD_LIST cField_list;
+non terminal AST_ARRAY_DEC arrayDec;
+non terminal AST_EXP exp;
+non terminal AST_EXP_COMMA_SEPARATED_LIST exp_list;
+non terminal AST_VAR var;
+non terminal AST_STMT stmt;
+non terminal AST_STMT_LIST stmtList;
+non terminal AST_NEW_EXP newExp;
+non terminal AST_C_FIELD cField;
+
+
+
+
+
+
+non terminal AST_DEC_BASIC dec_basic;
+non terminal AST_EXP_VAR exp_var;
+non terminal AST_EXP_SINGLE_PARENTHESIS exp_single_parenthesis;
+non terminal AST_EXP_BINOP exp_binop;
+non terminal AST_EXP_FUNC_CALL exp_func_call;
+non terminal AST_EXP_MINUS_INT exp_minus_int;
+non terminal AST_EXP_INT exp_int;
+non terminal AST_EXP_NIL exp_nil;
+non terminal AST_EXP_STRING exp_string;
+non terminal AST_STMT_VAR_DEC stmt_var_dec;
+non terminal AST_STMT_ASSIGN stmt_assign;
+non terminal AST_STMT_ASSIGN_NEW stmt_assign_new;
+non terminal AST_STMT_RETURN stmt_return;
+non terminal AST_STMT_IF stmt_if;
+non terminal AST_STMT_WHILE stmt_while;
+non terminal AST_STMT_FUNC_VOID stmt_func_void;
+non terminal AST_VAR_SIMPLE var_simple;
+non terminal AST_VAR_FIELD var_field;
+non terminal AST_VAR_SUBSCRIPT var_subscript;
+
+/***********************/
+/* OPERATOR PRECEDENCE */
+/***********************/
+
+precedence nonassoc ASSIGN; 
+precedence left EQ; 
+precedence left GT,LT;
+precedence left PLUS,MINUS;
+precedence left TIMES,DIVIDE;
+precedence nonassoc LBRACK;
+precedence nonassoc LPAREN; 
+precedence left DOT;
+
+/************************/
+/* START WITH: stmtList */
+/************************/
+start with Program;
+
+/********************/
+/* DERIVATION RULES */
+/********************/
+Program     ::=     dec_list:dl       {: RESULT = new AST_PROGRAM(dl,dlleft+1);    :}
+					;
+
+dec_list    ::=    	dec:d dec_list:dl  {: RESULT = new AST_DEC_LIST(d,dl,dlleft+1);    :}
+					|dec:d            {: RESULT = new AST_DEC_LIST(d,null,dleft+1);   :}
+					;
+
+dec			::=    	varDec:vd			{: RESULT = new AST_DEC_BASIC(vd,vdleft+1);    :}
+					|funcDec:fd			{: RESULT = new AST_DEC_BASIC(fd,fdleft+1);    :}
+					|classDec:cd			{: RESULT = new AST_DEC_BASIC(cd,cdleft+1);    :}
+					|arrayDec:ad			{: RESULT = new AST_DEC_BASIC(ad,adleft+1);    :}
+					;
+
+varDec		::=		ID:id1 ID:id2 SEMICOLON {: RESULT = new AST_VAR_DEC(id1,id2,null,id1left+1);  :}
+					|ID:id1 ID:id2 ASSIGN exp:e SEMICOLON {: RESULT = new AST_VAR_DEC(id1,id2,e,id1left+1);  :}
+					|ID:id1 ID:id2 ASSIGN newExp:ne SEMICOLON	{:RESULT = new AST_VAR_DEC(id1,id2,ne,id1left+1);	:}
+					;
+
+funcDec		::=     ID:id1 ID:id2 LPAREN funcDec_signature:fdo1 RPAREN LBRACE stmtList:sl RBRACE {: RESULT = new AST_FUNC_DEC(id1,id2,fdo1,sl,id1left+1);	:}
+					|ID:id1 ID:id2 LPAREN RPAREN LBRACE stmtList:sl RBRACE {: RESULT = new AST_FUNC_DEC(id1,id2,null,sl,id1left+1);	:}
+					;
+
+funcDec_signature::=	ID:id1 ID:id2 {: RESULT = new AST_FUNCDEC_TYPE_SIGNATURE(id1,id2,null,id1left+1);  :}
+					|ID:id1 ID:id2 COMMA funcDec_signature:fdo1 {: RESULT = new AST_FUNCDEC_TYPE_SIGNATURE(id1,id2,fdo1,id1left+1);  :}
+					;
+
+classDec	::= 	CLASS ID:id1 EXTENDS ID:id2 LBRACE cField_list:cfl RBRACE {: RESULT = new AST_CLASS_DEC(id1,id2,cfl,id1left+1); :}
+					| CLASS ID:id1 LBRACE cField_list:cfl RBRACE {: RESULT = new AST_CLASS_DEC(id1,null,cfl,id1left+1); :}
+					;
+
+cField_list	::=		cField:cf cField_list:cfl {: RESULT = new AST_C_FIELD_LIST(cf,cfl,cfleft+1);	 :}
+					|cField:cf  			{: RESULT = new AST_C_FIELD_LIST(cf,null,cfleft+1);	:}
+					;
+
+arrayDec	::=		ARRAY ID:id1 EQ ID:id2 LBRACK RBRACK {:RESULT = new AST_ARRAY_DEC(id1,id2,id1left+1);  :}
+					;
+					
+exp			::=		var:v 			{:RESULT = new AST_EXP_VAR(v,vleft+1);	:}
+					|LPAREN exp:e RPAREN	{:RESULT = new AST_EXP_SINGLE_PARENTHESIS(e,eleft+1); :}
+					|exp:e1 PLUS exp:e2 	{:RESULT = new AST_EXP_BINOP(e1,e2,0,e1left+1); :}
+					|exp:e1 MINUS exp:e2 	{:RESULT = new AST_EXP_BINOP(e1,e2,1,e1left+1); :}
+					|exp:e1 TIMES exp:e2 	{:RESULT = new AST_EXP_BINOP(e1,e2,2,e1left+1); :}
+					|exp:e1 DIVIDE exp:e2 	{:RESULT = new AST_EXP_BINOP(e1,e2,3,e1left+1); :}
+					|exp:e1 EQ exp:e2 	{:RESULT = new AST_EXP_BINOP(e1,e2,4,e1left+1); :}
+					|exp:e1 LT exp:e2 	{:RESULT = new AST_EXP_BINOP(e1,e2,5,e1left+1); :}
+					|exp:e1 GT exp:e2 	{:RESULT = new AST_EXP_BINOP(e1,e2,6,e1left+1); :}
+					|var:v DOT ID:id1 LPAREN exp_list:eo1 RPAREN		{:RESULT = new AST_EXP_FUNC_CALL(v,id1,eo1,vleft+1);	:}
+					|var:v DOT ID:id1 LPAREN RPAREN {:RESULT = new AST_EXP_FUNC_CALL(v,id1,null,vleft+1);	:}
+					|ID:id1 LPAREN exp_list:eo1 RPAREN		{:RESULT = new AST_EXP_FUNC_CALL(null,id1,eo1,id1left+1);	:}
+					|ID:id1 LPAREN RPAREN		{:RESULT = new AST_EXP_FUNC_CALL(null,id1,null,id1left+1);	:}
+					|MINUS INT:i {:RESULT = new AST_EXP_MINUS_INT(i,ileft+1);	:}
+					|INT:i 		{:RESULT = new AST_EXP_INT(i,ileft+1);		:}
+					|NIL		{:RESULT = new AST_EXP_NIL(lexer.getLine()-1);	:}
+					|STRING:s	{:RESULT = new AST_EXP_STRING(s,sleft+1);	:}
+					;
+
+exp_list	::=		exp:e1		{:RESULT = new AST_EXP_COMMA_SEPARATED_LIST(e1,null,e1left+1);	:}
+					|exp:e1 COMMA exp_list:eo1		{:RESULT = new AST_EXP_COMMA_SEPARATED_LIST(e1,eo1,e1left+1);	:}
+					;
+
+
+stmt 		::=		varDec: vd		{:RESULT  = new AST_STMT_VAR_DEC(vd,vdleft+1);	:}
+					|var:v ASSIGN exp:e SEMICOLON		{: RESULT = new AST_STMT_ASSIGN(v,e,vleft+1);	:}
+					|var:v ASSIGN newExp:ne	SEMICOLON		{: RESULT = new AST_STMT_ASSIGN_NEW(v,ne,vleft+1);	:}
+					|RETURN exp:e SEMICOLON		{:RESULT = new AST_STMT_RETURN(e,eleft+1);	:}
+					|RETURN SEMICOLON		{:RESULT = new AST_STMT_RETURN(null,lexer.getLine()-1);	:}
+					|IF LPAREN exp:e RPAREN LBRACE stmtList:sl	RBRACE	{:RESULT = new AST_STMT_IF(e,sl,eleft+1);	:}
+					|WHILE LPAREN exp:e RPAREN LBRACE stmtList:sl RBRACE	{:RESULT = new AST_STMT_WHILE(e,sl,eleft+1);	:}
+					|var:v DOT ID:id1 LPAREN exp_list:eo1 RPAREN SEMICOLON	{:RESULT = new AST_STMT_FUNC_VOID(v,id1,eo1,vleft+1);	:}
+					|var:v DOT ID:id1 LPAREN RPAREN SEMICOLON	{:RESULT = new AST_STMT_FUNC_VOID(v,id1,null,vleft+1);	:}
+					|ID:id1 LPAREN exp_list:eo1 RPAREN SEMICOLON	{:RESULT = new AST_STMT_FUNC_VOID(null,id1,eo1,id1left+1);	:}
+					|ID:id1 LPAREN RPAREN SEMICOLON	{:RESULT = new AST_STMT_FUNC_VOID(null,id1,null,id1left+1);	:}
+					;
+
+newExp		::=		NEW ID:id1 LBRACK exp:e	RBRACK {:RESULT = new AST_NEW_EXP(id1,e,id1left+1);	:}
+					|NEW ID:id1		{: RESULT = new AST_NEW_EXP(id1,null,id1left+1);	:}
+					;
+
+stmtList	::=		stmt:s	stmtList:l		{: RESULT = new AST_STMT_LIST(s,l,sleft+1);    :}
+					| stmt:s				{: RESULT = new AST_STMT_LIST(s,null,sleft+1); :}
+					;
+
+var			::=		ID:name								{: RESULT = new AST_VAR_SIMPLE(name,nameleft+1);       :}
+					| var:v DOT ID:fieldName			{: RESULT = new AST_VAR_FIELD(v,fieldName,vleft+1); :} 
+					| var:v LBRACK exp:e RBRACK			{: RESULT = new AST_VAR_SUBSCRIPT(v,e,vleft+1);     :} 
+					;
+
+cField		::=		varDec:vd		{:RESULT = new AST_C_FIELD(vd,vdleft+1);	:}
+					|funcDec:fd		{:RESULT = new AST_C_FIELD(fd,fdleft+1);	:}
+					;

@@ -1,0 +1,19 @@
+class Person
+{
+    int s := 1;
+	int get(){
+	    PrintString("Hello");
+	    return 20 + s;
+	}
+
+}
+
+class Student extends Person{
+    int i;
+}
+
+void main(){
+    Person p;
+    p := new Student;
+    PrintInt(p.get());
+}
